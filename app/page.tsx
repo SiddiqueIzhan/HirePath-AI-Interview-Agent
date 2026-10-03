@@ -1,18 +1,9 @@
 "use client";
 
-/**
- * AI Job Agent landing page: single file, all motion powered by framer-motion.
- *
- * Install:
- *   npm i framer-motion
- *   npx shadcn@latest add button badge card textarea progress tabs table
- *
- * Styles are injected through the <style> tag below (tone tokens + static helpers only;
- * there are no CSS keyframes or transitions left, framer-motion drives everything).
- */
+/** Interactive landing page sections and their animated product demos. */
 
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import { Caveat, Hanken_Grotesk } from "next/font/google";
+import { Caveat } from "next/font/google";
 import {
   animate,
   motion,
@@ -57,160 +48,17 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import Image from "next/image";
-import logo from "../public/logo.png";
+import Logo from "@/components/logo";
 
 /* ====================================================================== */
 /* Static styles (tone tokens + helpers). No animations live here.         */
 /* ====================================================================== */
 
-const LANDING_CSS = `
-html:has(.lp-root) {
-  scroll-behavior: smooth;
-  scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 84px);
-  background: #000;
-}
-
-.lp-root {
-  font-family: var(--font-hanken), "Helvetica Neue", Arial, system-ui, sans-serif;
-  line-height: 1.5;
-  overflow-x: clip;
-  -webkit-font-smoothing: antialiased;
-  background: #000;
-  color: #f4f4f5;
-}
-.lp-root a { text-decoration: none; }
-.lp-script { font-family: var(--font-caveat), "Segoe Script", cursive; }
-
-[data-tone="dark"] {
-  --background: #000;
-  --foreground: #f4f4f5;
-  --card: #0e1012;
-  --card-foreground: #f4f4f5;
-  --popover: #0e1012;
-  --popover-foreground: #f4f4f5;
-  --muted-foreground: #8b8f94;
-  --border: rgba(255, 255, 255, 0.09);
-  --input: rgba(255, 255, 255, 0.12);
-  --primary: #2be39a;
-  --primary-foreground: #04120c;
-  --ring: #2be39a;
-  --lp-deep: #2be39a;
-  --track: rgba(255, 255, 255, 0.1);
-  --tabs-bg: #1c1f22;
-  --chip-bg: rgba(255, 255, 255, 0.08);
-  --chip-fg: #cfd2d5;
-  --chip-bd: rgba(255, 255, 255, 0.09);
-  --ok-bg: rgba(43, 227, 154, 0.14);
-  --ok-fg: #6ff0bd;
-  --ok-bd: rgba(43, 227, 154, 0.3);
-  --warn-bg: rgba(255, 189, 46, 0.12);
-  --warn-fg: #ffcf66;
-  --warn-bd: rgba(255, 189, 46, 0.28);
-}
-
-[data-tone="light"] {
-  --background: #fcfcfc;
-  --foreground: #0b0b0c;
-  --card: #ffffff;
-  --card-foreground: #0b0b0c;
-  --popover: #ffffff;
-  --popover-foreground: #0b0b0c;
-  --muted-foreground: #6f7479;
-  --border: #e4e7e9;
-  --input: #e4e7e9;
-  --primary: #2be39a;
-  --primary-foreground: #04120c;
-  --ring: #10a070;
-  --lp-deep: #10a070;
-  --track: #e4e7e9;
-  --tabs-bg: #eef0f1;
-  --chip-bg: #eff1f2;
-  --chip-fg: #43484d;
-  --chip-bd: #e4e7e9;
-  --ok-bg: rgba(16, 160, 112, 0.12);
-  --ok-fg: #0c8a5f;
-  --ok-bd: rgba(16, 160, 112, 0.3);
-  --warn-bg: rgba(214, 140, 0, 0.1);
-  --warn-fg: #a56a00;
-  --warn-bd: rgba(214, 140, 0, 0.3);
-}
-
-@media (prefers-color-scheme: dark) {
-  [data-tone="light"] {
-    --background: #0f1113;
-    --foreground: #f1f2f3;
-    --card: #171a1d;
-    --card-foreground: #f1f2f3;
-    --popover: #171a1d;
-    --popover-foreground: #f1f2f3;
-    --muted-foreground: #8f949a;
-    --border: rgba(255, 255, 255, 0.1);
-    --input: rgba(255, 255, 255, 0.12);
-    --ring: #2be39a;
-    --lp-deep: #2be39a;
-    --track: rgba(255, 255, 255, 0.1);
-    --tabs-bg: #1c1f22;
-    --chip-bg: rgba(255, 255, 255, 0.08);
-    --chip-fg: #cfd2d5;
-    --chip-bd: rgba(255, 255, 255, 0.1);
-    --ok-bg: rgba(43, 227, 154, 0.14);
-    --ok-fg: #6ff0bd;
-    --ok-bd: rgba(43, 227, 154, 0.3);
-    --warn-bg: rgba(255, 189, 46, 0.12);
-    --warn-fg: #ffcf66;
-    --warn-bd: rgba(255, 189, 46, 0.28);
-  }
-}
-
-.lp-g { color: var(--lp-deep); }
-
-.lp-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 10px var(--primary); }
-.lp-spark { display: inline-block; width: 0.62em; height: 0.62em; margin-left: 0.12em; vertical-align: 0.04em; filter: drop-shadow(0 0 14px rgba(43, 227, 154, 0.85)); }
-.lp-scan { position: absolute; left: 0; right: 0; height: 70px; background: linear-gradient(180deg, transparent, rgba(43, 227, 154, 0.35), transparent); border-bottom: 2px solid var(--primary); }
-
-.lp-chip { display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 9px; border-radius: 7px; font-size: 12px; font-weight: 400; background: var(--chip-bg); color: var(--chip-fg); border: 1px solid var(--chip-bd); }
-.lp-chip-ok { background: var(--ok-bg); color: var(--ok-fg); border-color: var(--ok-bd); }
-.lp-chip-warn { background: var(--warn-bg); color: var(--warn-fg); border-color: var(--warn-bd); }
-
-.lp-meter { height: 5px; border-radius: 5px; background: var(--track); overflow: hidden; }
-.lp-meter > i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #10a070, #2be39a); }
-.lp-meter-lg { height: 10px; border-radius: 10px; }
-.lp-meter-warn > i { background: linear-gradient(90deg, #b07900, #ffbd2e); }
-
-.lp-tick { width: 24px; height: 24px; border-radius: 50%; background: rgba(43, 227, 154, 0.18); color: var(--lp-deep); display: grid; place-items: center; flex: none; }
-.lp-tri { width: 24px; height: 24px; border-radius: 50%; background: rgba(255, 189, 46, 0.16); color: #e0a000; display: grid; place-items: center; flex: none; font-size: 11px; }
-
-.lp-plan { counter-reset: p; }
-.lp-plan li { counter-increment: p; display: grid; grid-template-columns: 38px 1fr; gap: 14px; padding: 14px; border-radius: 14px; background: #17191c; border: 1px solid var(--border); }
-.lp-plan li::before { content: counter(p); width: 38px; height: 38px; border-radius: 11px; background: rgba(43, 227, 154, 0.15); color: var(--primary); display: grid; place-items: center; font-weight: 600; }
-
-.lp-st { display: inline-flex; height: 26px; align-items: center; padding: 0 11px; border-radius: 99px; font-size: 12.5px; background: #eceef0; color: #43484d; }
-.lp-st-Interview { background: rgba(43, 227, 154, 0.16); color: #0c8a5f; }
-.lp-st-Offer { background: rgba(16, 160, 112, 0.9); color: #fff; }
-.lp-st-Applied { background: rgba(66, 133, 244, 0.14); color: #2e6fe0; }
-.lp-st-Rejected { background: rgba(229, 72, 63, 0.12); color: #d23a31; }
-.lp-st-Saved { background: rgba(214, 140, 0, 0.14); color: #a56a00; }
-@media (prefers-color-scheme: dark) {
-  [data-tone="light"] .lp-st { background: #25282c; color: #cfd2d5; }
-  [data-tone="light"] .lp-st-Interview { color: #6ff0bd; }
-  [data-tone="light"] .lp-st-Offer { background: rgba(16, 160, 112, 0.9); color: #fff; }
-  [data-tone="light"] .lp-st-Applied { color: #8db4ff; }
-  [data-tone="light"] .lp-st-Rejected { color: #ff8f88; }
-  [data-tone="light"] .lp-st-Saved { color: #ffcf66; }
-}
-`;
 
 /* ====================================================================== */
 /* Fonts                                                                   */
 /* ====================================================================== */
 
-const hanken = Hanken_Grotesk({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-hanken",
-  display: "swap",
-});
 const caveat = Caveat({
   subsets: ["latin"],
   weight: ["500", "700"],
@@ -340,20 +188,6 @@ function Lift({
 /* ====================================================================== */
 /* Small shared pieces                                                     */
 /* ====================================================================== */
-
-function Logo({ className }: { className?: string }) {
-  return (
-    <a
-      href="#top"
-      className={cn(
-        "flex items-center whitespace-nowrap text-[22px] font-bold tracking-[-.03em]",
-        className,
-      )}
-    >
-      <Image src={logo} alt="logo" width={200} height={60} />
-    </a>
-  );
-}
 
 /* ---- Buttons: shadcn styling + framer-motion hover/tap/glow ---- */
 type Kind = "primary" | "ghost" | "outline" | "glow";
@@ -653,47 +487,6 @@ function SectionTitle({
 /* ====================================================================== */
 /* Navbar                                                                  */
 /* ====================================================================== */
-
-const NAV_LINKS = [
-  { href: "#features", label: "Features" },
-  { href: "#how", label: "How It Works" },
-  { href: "#testimonials", label: "Testimonials" },
-];
-
-function Navbar() {
-  return (
-    <header className="sticky top-0 z-[80] border-b border-white/[.06] bg-black/[.72] pt-[env(safe-area-inset-top,0px)] backdrop-blur-[14px]">
-      <div className="mx-auto flex h-[72px] max-w-[1280px] items-center gap-9 px-7 max-[900px]:gap-3 max-[900px]:px-[18px]">
-        <Logo />
-
-        <nav
-          aria-label="Primary"
-          className="flex gap-[30px] text-base text-[#a3a6aa] max-[900px]:hidden"
-        >
-          {NAV_LINKS.map((link) => (
-            <motion.a
-              key={link.href}
-              href={link.href}
-              whileHover={{ color: "#ffffff" }}
-              transition={{ duration: 0.2 }}
-            >
-              {link.label}
-            </motion.a>
-          ))}
-        </nav>
-
-        <div className="ml-auto flex items-center gap-2.5">
-          <LinkButton kind="ghost" href="#final" className="max-[520px]:hidden">
-            Sign In
-          </LinkButton>
-          <LinkButton kind="primary" href="#final">
-            Get Started
-          </LinkButton>
-        </div>
-      </div>
-    </header>
-  );
-}
 
 /* ====================================================================== */
 /* Hero                                                                    */
@@ -1801,18 +1594,11 @@ function ProfilePanel({
 export default function LandingPage() {
   return (
     <MotionConfig reducedMotion="user">
-      <style dangerouslySetInnerHTML={{ __html: LANDING_CSS }} />
-      <title>AI Job Agent — Turn your resume into a smarter job search</title>
-      <meta
-        name="description"
-        content="Analyze your resume, discover relevant jobs, prepare for interviews and track your progress — all in one place."
-      />
-
       <div
         data-tone="dark"
-        className={cn(hanken.variable, caveat.variable, "lp-root")}
+        className={cn(caveat.variable, "lp-root")}
       >
-        <Navbar />
+        {/* <Navbar /> */}
 
         <main id="top">
           <Hero />
